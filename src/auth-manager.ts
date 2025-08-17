@@ -1,8 +1,8 @@
-import { OAuth2Client } from 'google-auth-library';
 import { authenticate } from '@google-cloud/local-auth';
 import { promises as fs } from 'fs';
+import { OAuth2Client } from 'google-auth-library';
 import path from 'path';
-import { AuthConfig, TokenData, AuthenticationError, TokenExpiredError } from './types.js';
+import { AuthConfig, AuthenticationError, TokenData, TokenExpiredError } from './types.js';
 
 export class AuthManager {
   private readonly AUTH_DIR = path.join(process.cwd(), 'auth');
@@ -70,11 +70,11 @@ export class AuthManager {
 
       // Save tokens
       if (client.credentials) {
-        await this.saveToken(client);
+        await this.saveToken(client as unknown as OAuth2Client);
         console.log('Authentication successful! Tokens saved.');
       }
 
-      return client;
+      return client as unknown as OAuth2Client;
     } catch (error) {
       if (error instanceof AuthenticationError) {
         throw error;
@@ -118,8 +118,8 @@ export class AuthManager {
         client_id: credentials.web.client_id,
         client_secret: credentials.web.client_secret,
         refresh_token: client.credentials.refresh_token!,
-        access_token: client.credentials.access_token,
-        expiry_date: client.credentials.expiry_date
+        access_token: client.credentials.access_token || undefined,
+        expiry_date: client.credentials.expiry_date || undefined
       };
 
       await fs.writeFile(this.TOKEN_PATH, JSON.stringify(tokenData, null, 2));
@@ -137,8 +137,8 @@ export class AuthManager {
       const tokenData: TokenData = JSON.parse(content);
       
       // Update with new access token and expiry
-      tokenData.access_token = auth.credentials.access_token;
-      tokenData.expiry_date = auth.credentials.expiry_date;
+      tokenData.access_token = auth.credentials.access_token || undefined;
+      tokenData.expiry_date = auth.credentials.expiry_date || undefined;
       
       await fs.writeFile(this.TOKEN_PATH, JSON.stringify(tokenData, null, 2));
     } catch (error) {

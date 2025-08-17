@@ -1,13 +1,12 @@
 import { OAuth2Client } from 'google-auth-library';
 import { google, youtube_v3, youtubeAnalytics_v2 } from 'googleapis';
-import { 
-  AnalyticsParams, 
-  VideoAnalyticsParams, 
-  ChannelInfo, 
-  VideoInfo, 
-  SearchResult,
+import {
+  AnalyticsParams,
+  ChannelInfo,
   QuotaExceededError,
-  RateLimitError 
+  RateLimitError,
+  SearchResult,
+  VideoInfo
 } from './types.js';
 
 export class YouTubeClient {
@@ -41,10 +40,10 @@ export class YouTubeClient {
         snippet: {
           title: channel.snippet!.title!,
           description: channel.snippet!.description!,
-          customUrl: channel.snippet!.customUrl,
+          customUrl: channel.snippet!.customUrl || undefined,
           publishedAt: channel.snippet!.publishedAt!,
-          thumbnails: channel.snippet!.thumbnails!,
-          country: channel.snippet!.country
+          thumbnails: this.transformThumbnails(channel.snippet!.thumbnails!),
+          country: channel.snippet!.country || undefined
         },
         statistics: {
           viewCount: channel.statistics!.viewCount!,
@@ -76,19 +75,19 @@ export class YouTubeClient {
         etag: item.etag!,
         id: {
           kind: item.id!.kind!,
-          videoId: item.id!.videoId,
-          channelId: item.id!.channelId,
-          playlistId: item.id!.playlistId
+          videoId: item.id!.videoId || undefined,
+          channelId: item.id!.channelId || undefined,
+          playlistId: item.id!.playlistId || undefined
         },
         snippet: {
           publishedAt: item.snippet!.publishedAt!,
           channelId: item.snippet!.channelId!,
           title: item.snippet!.title!,
           description: item.snippet!.description!,
-          thumbnails: item.snippet!.thumbnails!,
+          thumbnails: this.transformSearchThumbnails(item.snippet!.thumbnails!),
           channelTitle: item.snippet!.channelTitle!,
           liveBroadcastContent: item.snippet!.liveBroadcastContent!,
-          publishTime: item.snippet!.publishTime!
+          publishTime: item.snippet!.publishedAt!
         }
       })) || [];
     } catch (error) {
@@ -118,13 +117,13 @@ export class YouTubeClient {
           channelId: video.snippet!.channelId!,
           title: video.snippet!.title!,
           description: video.snippet!.description!,
-          thumbnails: video.snippet!.thumbnails!,
+          thumbnails: this.transformVideoThumbnails(video.snippet!.thumbnails!),
           channelTitle: video.snippet!.channelTitle!,
-          tags: video.snippet!.tags,
+          tags: video.snippet!.tags || undefined,
           categoryId: video.snippet!.categoryId!,
           liveBroadcastContent: video.snippet!.liveBroadcastContent!,
-          defaultLanguage: video.snippet!.defaultLanguage,
-          defaultAudioLanguage: video.snippet!.defaultAudioLanguage
+          defaultLanguage: video.snippet!.defaultLanguage || undefined,
+          defaultAudioLanguage: video.snippet!.defaultAudioLanguage || undefined
         },
         statistics: {
           viewCount: video.statistics!.viewCount!,
@@ -138,7 +137,7 @@ export class YouTubeClient {
           definition: video.contentDetails!.definition!,
           caption: video.contentDetails!.caption!,
           licensedContent: video.contentDetails!.licensedContent!,
-          regionRestriction: video.contentDetails!.regionRestriction
+          regionRestriction: this.transformRegionRestriction(video.contentDetails!.regionRestriction)
         }
       };
     } catch (error) {
@@ -167,19 +166,19 @@ export class YouTubeClient {
         etag: item.etag!,
         id: {
           kind: item.id!.kind!,
-          videoId: item.id!.videoId,
-          channelId: item.id!.channelId,
-          playlistId: item.id!.playlistId
+          videoId: item.id!.videoId || undefined,
+          channelId: item.id!.channelId || undefined,
+          playlistId: item.id!.playlistId || undefined
         },
         snippet: {
           publishedAt: item.snippet!.publishedAt!,
           channelId: item.snippet!.channelId!,
           title: item.snippet!.title!,
           description: item.snippet!.description!,
-          thumbnails: item.snippet!.thumbnails!,
+          thumbnails: this.transformSearchThumbnails(item.snippet!.thumbnails!),
           channelTitle: item.snippet!.channelTitle!,
           liveBroadcastContent: item.snippet!.liveBroadcastContent!,
-          publishTime: item.snippet!.publishTime!
+          publishTime: item.snippet!.publishedAt!
         }
       })) || [];
     } catch (error) {
@@ -290,5 +289,40 @@ export class YouTubeClient {
       message: error.message,
       errors: error.errors
     });
+  }
+
+  // Helper methods for type transformations
+  private transformThumbnails(thumbnails: any): { default?: { url: string }; medium?: { url: string }; high?: { url: string } } {
+    return {
+      default: thumbnails.default?.url ? { url: thumbnails.default.url } : undefined,
+      medium: thumbnails.medium?.url ? { url: thumbnails.medium.url } : undefined,
+      high: thumbnails.high?.url ? { url: thumbnails.high.url } : undefined
+    };
+  }
+
+  private transformVideoThumbnails(thumbnails: any): { default?: { url: string }; medium?: { url: string }; high?: { url: string }; standard?: { url: string }; maxres?: { url: string } } {
+    return {
+      default: thumbnails.default?.url ? { url: thumbnails.default.url } : undefined,
+      medium: thumbnails.medium?.url ? { url: thumbnails.medium.url } : undefined,
+      high: thumbnails.high?.url ? { url: thumbnails.high.url } : undefined,
+      standard: thumbnails.standard?.url ? { url: thumbnails.standard.url } : undefined,
+      maxres: thumbnails.maxres?.url ? { url: thumbnails.maxres.url } : undefined
+    };
+  }
+
+  private transformSearchThumbnails(thumbnails: any): { default?: { url: string }; medium?: { url: string }; high?: { url: string } } {
+    return {
+      default: thumbnails.default?.url ? { url: thumbnails.default.url } : undefined,
+      medium: thumbnails.medium?.url ? { url: thumbnails.medium.url } : undefined,
+      high: thumbnails.high?.url ? { url: thumbnails.high.url } : undefined
+    };
+  }
+
+  private transformRegionRestriction(restriction: any): { allowed?: string[]; blocked?: string[] } | undefined {
+    if (!restriction) return undefined;
+    return {
+      allowed: restriction.allowed || undefined,
+      blocked: restriction.blocked || undefined
+    };
   }
 }
