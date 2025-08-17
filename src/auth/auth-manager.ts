@@ -5,7 +5,7 @@ import path from 'path';
 import { AuthConfig, AuthenticationError, TokenData, TokenExpiredError } from './types.js';
 
 export class AuthManager {
-  private readonly AUTH_DIR = path.join(process.cwd(), 'auth');
+  private readonly AUTH_DIR = path.join(process.cwd(), 'src', 'auth');
   private readonly CREDENTIALS_PATH = path.join(this.AUTH_DIR, 'credentials.json');
   private readonly TOKEN_PATH = path.join(this.AUTH_DIR, 'token.json');
   private readonly SCOPES = [
@@ -15,15 +15,6 @@ export class AuthManager {
   ];
 
   constructor() {
-    this.ensureAuthDirectoryExists();
-  }
-
-  private async ensureAuthDirectoryExists(): Promise<void> {
-    try {
-      await fs.mkdir(this.AUTH_DIR, { recursive: true });
-    } catch (error) {
-      throw new AuthenticationError(`Failed to create auth directory: ${error}`);
-    }
   }
 
   async getAuthClient(): Promise<OAuth2Client> {
@@ -49,16 +40,13 @@ export class AuthManager {
 
   async authenticate(): Promise<OAuth2Client> {
     try {
-      // Ensure auth directory exists
-      await this.ensureAuthDirectoryExists();
-      
       // Check if credentials file exists
       try {
         await fs.access(this.CREDENTIALS_PATH);
       } catch {
         throw new AuthenticationError(
           `Credentials file not found at ${this.CREDENTIALS_PATH}. ` +
-          'Please place your Google OAuth credentials in auth/credentials.json'
+          'Please place your Google OAuth credentials in src/auth/credentials.json'
         );
       }
 
