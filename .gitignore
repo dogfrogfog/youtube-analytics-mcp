@@ -1,3 +1,7 @@
 node_modules
 build
 .env
+
+# Auth files - never commit credentials or tokens
+auth/credentials.json
+auth/token.json
