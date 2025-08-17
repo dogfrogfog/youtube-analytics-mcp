@@ -6,7 +6,8 @@ import {
   QuotaExceededError,
   RateLimitError,
   SearchResult,
-  VideoInfo
+  VideoInfo,
+  ComparisonResult
 } from './types.js';
 
 export class YouTubeClient {
@@ -234,6 +235,92 @@ export class YouTubeClient {
         columnHeaders: response.data.columnHeaders,
         rows: response.data.rows,
         kind: response.data.kind
+      };
+    } catch (error) {
+      this.handleApiError(error);
+      throw error;
+    }
+  }
+
+  // Channel Health Check methods
+  async getChannelOverview(params: { startDate: string; endDate: string }): Promise<any> {
+    try {
+      const response = await this.withRetry(async () => {
+        return await this.youtubeAnalytics.reports.query({
+          startDate: params.startDate,
+          endDate: params.endDate,
+          metrics: 'views,estimatedMinutesWatched,averageViewDuration,subscribersGained,subscribersLost',
+          dimensions: 'day',
+          ids: 'channel==MINE',
+          sort: 'day'
+        });
+      });
+
+      return {
+        columnHeaders: response.data.columnHeaders,
+        rows: response.data.rows,
+        kind: response.data.kind,
+        period: `${params.startDate} to ${params.endDate}`
+      };
+    } catch (error) {
+      this.handleApiError(error);
+      throw error;
+    }
+  }
+
+  async getComparisonMetrics(params: {
+    metrics: string[];
+    period1Start: string;
+    period1End: string;
+    period2Start: string;
+    period2End: string;
+  }): Promise<ComparisonResult<any>> {
+    try {
+      const [period1, period2] = await Promise.all([
+        this.withRetry(async () => {
+          return await this.youtubeAnalytics.reports.query({
+            startDate: params.period1Start,
+            endDate: params.period1End,
+            metrics: params.metrics.join(','),
+            ids: 'channel==MINE'
+          });
+        }),
+        this.withRetry(async () => {
+          return await this.youtubeAnalytics.reports.query({
+            startDate: params.period2Start,
+            endDate: params.period2End,
+            metrics: params.metrics.join(','),
+            ids: 'channel==MINE'
+          });
+        })
+      ]);
+
+      // Calculate percentage change for each metric
+      const period1Data = period1.data;
+      const period2Data = period2.data;
+      
+      let changePercent = 0;
+      if (period1Data.rows && period2Data.rows && 
+          period1Data.rows.length > 0 && period2Data.rows.length > 0) {
+        // Simple comparison of first metric if available
+        const period1Value = Number(period1Data.rows[0][0]) || 0;
+        const period2Value = Number(period2Data.rows[0][0]) || 0;
+        
+        if (period2Value > 0) {
+          changePercent = ((period1Value - period2Value) / period2Value) * 100;
+        }
+      }
+
+      return {
+        period1: {
+          data: period1Data,
+          period: `${params.period1Start} to ${params.period1End}`
+        },
+        period2: {
+          data: period2Data,
+          period: `${params.period2Start} to ${params.period2End}`
+        },
+        changePercent: Math.round(changePercent * 100) / 100
       };
     } catch (error) {
       this.handleApiError(error);

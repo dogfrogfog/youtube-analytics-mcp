@@ -2,7 +2,7 @@ import { authenticate } from '@google-cloud/local-auth';
 import { promises as fs } from 'fs';
 import { OAuth2Client } from 'google-auth-library';
 import path from 'path';
-import { AuthConfig, AuthenticationError, TokenData, TokenExpiredError } from './types.js';
+import { AuthConfig, AuthenticationError, TokenData, TokenExpiredError } from '../types.js';
 
 export class AuthManager {
   private readonly AUTH_DIR = path.join(process.cwd(), 'src', 'auth');
