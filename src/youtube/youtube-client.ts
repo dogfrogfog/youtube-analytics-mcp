@@ -249,7 +249,7 @@ export class YouTubeClient {
         return await this.youtubeAnalytics.reports.query({
           startDate: params.startDate,
           endDate: params.endDate,
-          metrics: 'views,estimatedMinutesWatched,averageViewDuration,subscribersGained,subscribersLost',
+          metrics: 'views,estimatedMinutesWatched,averageViewDuration,averageViewPercentage,subscribersGained,subscribersLost',
           dimensions: 'day',
           ids: 'channel==MINE',
           sort: 'day'

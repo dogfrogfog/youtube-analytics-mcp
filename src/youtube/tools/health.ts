@@ -76,4 +76,40 @@ ${JSON.stringify(comparison, null, 2)}`
       }
     }
   );
+
+  // Get average view percentage for a date range
+  server.tool(
+    "get_average_view_percentage",
+    "Get average view percentage (what % of videos viewers actually watch) for a date range",
+    {
+      startDate: z.string().describe("Start date (YYYY-MM-DD)"),
+      endDate: z.string().describe("End date (YYYY-MM-DD)")
+    },
+    async ({ startDate, endDate }) => {
+      try {
+        const youtubeClient = await getYouTubeClient();
+        const result = await youtubeClient.getChannelAnalytics({
+          startDate,
+          endDate,
+          metrics: ['averageViewPercentage']
+        });
+        
+        const percentage = result.rows?.[0]?.[0];
+        return {
+          content: [{
+            type: "text",
+            text: `Average View Percentage (${startDate} to ${endDate}): ${percentage}%\n\nThis shows what percentage of your videos viewers actually watch on average, accounting for different video lengths.`
+          }]
+        };
+      } catch (error) {
+        return {
+          content: [{
+            type: "text",
+            text: `Error: ${error instanceof Error ? error.message : String(error)}`
+          }],
+          isError: true
+        };
+      }
+    }
+  );
 }
