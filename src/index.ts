@@ -1,9 +1,9 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
-import { AuthManager } from './auth-manager.js';
+import { AuthManager } from './auth/auth-manager.js';
 import { YouTubeClient } from './youtube-client.js';
-import { AuthenticationError, QuotaExceededError, RateLimitError } from './types.js';
+import { AuthenticationError } from './auth/types.js';
 
 // Create server instance
 const server = new McpServer({
@@ -19,12 +19,24 @@ const server = new McpServer({
 // Initialize auth manager
 const authManager = new AuthManager();
 
+// Cache for YouTube client
+let youtubeClientCache: YouTubeClient | null = null;
+
 // Helper function to get YouTube client
 async function getYouTubeClient(): Promise<YouTubeClient> {
   try {
+    // Return cached client if available
+    if (youtubeClientCache) {
+      return youtubeClientCache;
+    }
+
     const auth = await authManager.getAuthClient();
-    return new YouTubeClient(auth);
+    youtubeClientCache = new YouTubeClient(auth);
+    return youtubeClientCache;
   } catch (error) {
+    // Clear cache on error
+    youtubeClientCache = null;
+    
     if (error instanceof AuthenticationError) {
       throw new Error(`Authentication failed: ${error.message}`);
     }
@@ -382,6 +394,9 @@ server.tool(
   async () => {
     try {
       await authManager.revokeToken();
+      
+      // Clear YouTube client cache
+      youtubeClientCache = null;
       
       return {
         content: [{

@@ -14,26 +14,54 @@ export class AuthManager {
     'https://www.googleapis.com/auth/youtubepartner'
   ];
 
+  private authClient: OAuth2Client | null = null;
+
   constructor() {
   }
 
   async getAuthClient(): Promise<OAuth2Client> {
+    // Return cached client if available and valid
+    if (this.authClient) {
+      try {
+        await this.refreshTokenIfNeeded(this.authClient);
+        return this.authClient;
+      } catch (error) {
+        console.log('Cached auth client invalid, creating new one...');
+        this.authClient = null;
+      }
+    }
+
     try {
       // Try to load existing token
       const content = await fs.readFile(this.TOKEN_PATH, 'utf8');
       const tokenData: TokenData = JSON.parse(content);
       
-      // Create OAuth2Client from stored credentials
-      const { google } = await import('googleapis');
-      const auth = google.auth.fromJSON(tokenData) as OAuth2Client;
+      // Load credentials to get client_id and client_secret
+      const credentialsContent = await fs.readFile(this.CREDENTIALS_PATH, 'utf8');
+      const credentials: AuthConfig = JSON.parse(credentialsContent);
+      
+      // Create OAuth2Client with proper credentials
+      this.authClient = new OAuth2Client(
+        credentials.web.client_id,
+        credentials.web.client_secret,
+        credentials.web.redirect_uris[0]
+      );
+      
+      // Set the stored tokens
+      this.authClient.setCredentials({
+        access_token: tokenData.access_token,
+        refresh_token: tokenData.refresh_token,
+        expiry_date: tokenData.expiry_date
+      });
       
       // Refresh token if needed
-      await this.refreshTokenIfNeeded(auth);
+      await this.refreshTokenIfNeeded(this.authClient);
       
-      return auth;
+      return this.authClient;
     } catch (error) {
       // If no token exists or loading fails, trigger authentication
       console.log('No valid token found, initiating authentication flow...');
+      this.authClient = null;
       return await this.authenticate();
     }
   }
@@ -50,6 +78,8 @@ export class AuthManager {
         );
       }
 
+      console.log('Auth manager CREDENTIALS_PATH', this.CREDENTIALS_PATH);
+
       // Trigger OAuth flow using local-auth
       const client = await authenticate({
         scopes: this.SCOPES,
@@ -58,11 +88,12 @@ export class AuthManager {
 
       // Save tokens
       if (client.credentials) {
-        await this.saveToken(client as unknown as OAuth2Client);
+        this.authClient = client as unknown as OAuth2Client;
+        await this.saveToken(this.authClient);
         console.log('Authentication successful! Tokens saved.');
       }
 
-      return client as unknown as OAuth2Client;
+      return this.authClient || (client as unknown as OAuth2Client);
     } catch (error) {
       if (error instanceof AuthenticationError) {
         throw error;
@@ -78,8 +109,14 @@ export class AuthManager {
       const expiryDate = auth.credentials.expiry_date;
       const fiveMinutesFromNow = now + (5 * 60 * 1000);
 
-      if (expiryDate && expiryDate <= fiveMinutesFromNow) {
+      if (!expiryDate || expiryDate <= fiveMinutesFromNow) {
         console.log('Token expired or expiring soon, refreshing...');
+        
+        // Ensure we have a refresh token
+        if (!auth.credentials.refresh_token) {
+          console.error('No refresh token available');
+          throw new TokenExpiredError('No refresh token available');
+        }
         
         const { credentials } = await auth.refreshAccessToken();
         auth.setCredentials(credentials);
@@ -91,7 +128,9 @@ export class AuthManager {
       }
     } catch (error) {
       console.error('Token refresh failed:', error);
-      throw new TokenExpiredError('default');
+      // Clear the cached client so we don't keep using invalid tokens
+      this.authClient = null;
+      throw new TokenExpiredError('Token refresh failed - please re-authenticate');
     }
   }
 
@@ -138,6 +177,9 @@ export class AuthManager {
     try {
       const auth = await this.getAuthClient();
       await auth.revokeCredentials();
+      
+      // Clear cached client
+      this.authClient = null;
       
       // Remove stored token file
       try {
