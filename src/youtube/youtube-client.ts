@@ -189,6 +189,69 @@ export class YouTubeClient {
     }
   }
 
+  async searchChannelVideos(params: {
+    query?: string;
+    startDate?: string;
+    endDate?: string;
+    maxResults?: number;
+  }): Promise<SearchResult[]> {
+    try {
+      const { query, startDate, endDate, maxResults = 25 } = params;
+      
+      // First get the channel info to get the channel ID
+      const channelInfo = await this.getChannelInfo();
+      
+      // Convert dates to RFC 3339 format if provided
+      let publishedAfter: string | undefined;
+      let publishedBefore: string | undefined;
+      
+      if (startDate) {
+        publishedAfter = new Date(startDate + 'T00:00:00Z').toISOString();
+      }
+      
+      if (endDate) {
+        publishedBefore = new Date(endDate + 'T23:59:59Z').toISOString();
+      }
+
+      const response = await this.withRetry(async () => {
+        return await this.youtube.search.list({
+          part: ['snippet'],
+          channelId: channelInfo.id,
+          type: ['video'],
+          maxResults,
+          order: 'date',
+          q: query,
+          publishedAfter,
+          publishedBefore
+        });
+      });
+
+      return response.data.items?.map(item => ({
+        kind: item.kind!,
+        etag: item.etag!,
+        id: {
+          kind: item.id!.kind!,
+          videoId: item.id!.videoId || undefined,
+          channelId: item.id!.channelId || undefined,
+          playlistId: item.id!.playlistId || undefined
+        },
+        snippet: {
+          publishedAt: item.snippet!.publishedAt!,
+          channelId: item.snippet!.channelId!,
+          title: item.snippet!.title!,
+          description: item.snippet!.description!,
+          thumbnails: this.transformSearchThumbnails(item.snippet!.thumbnails!),
+          channelTitle: item.snippet!.channelTitle!,
+          liveBroadcastContent: item.snippet!.liveBroadcastContent!,
+          publishTime: item.snippet!.publishedAt!
+        }
+      })) || [];
+    } catch (error) {
+      this.handleApiError(error);
+      throw error;
+    }
+  }
+
   // YouTube Analytics API methods
   async getChannelAnalytics(params: AnalyticsParams): Promise<any> {
     try {
