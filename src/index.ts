@@ -11,7 +11,7 @@ import { registerHealthTools } from './youtube/tools/health.js';
 
 // Create server instance
 const server = new McpServer({
-  name: "yt-analytics-mcp",
+  name: "youtube-analytics-mcp",
   version: "1.0.0",
   capabilities: {
     resources: {},

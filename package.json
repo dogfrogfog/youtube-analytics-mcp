@@ -1,10 +1,10 @@
 {
   "type": "module",
-  "name": "yt-analytics-mcp",
+  "name": "youtube-analytics-mcp",
   "version": "1.0.0",
   "description": "YouTube Analytics MCP",
   "bin": {
-    "yt-analytics-mcp": "./build/index.js"
+    "youtube-analytics-mcp": "./build/index.js"
   },
   "scripts": {
     "build": "tsc && chmod 755 build/index.js",
