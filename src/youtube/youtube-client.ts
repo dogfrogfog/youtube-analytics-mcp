@@ -7,7 +7,8 @@ import {
   RateLimitError,
   SearchResult,
   VideoInfo,
-  ComparisonResult
+  ComparisonResult,
+  DemographicsParams
 } from './types.js';
 
 export class YouTubeClient {
@@ -326,6 +327,62 @@ export class YouTubeClient {
       this.handleApiError(error);
       throw error;
     }
+  }
+
+  // Demographics and Discovery methods
+  async getDemographics(params: DemographicsParams): Promise<any> {
+    const filters = params.videoId ? `video==${params.videoId}` : undefined;
+    return this.getChannelAnalytics({
+      ...params,
+      metrics: ['viewerPercentage'],
+      dimensions: ['ageGroup', 'gender'],
+      filters,
+      sort: 'gender,ageGroup'
+    });
+  }
+
+  async getGeographicDistribution(params: DemographicsParams): Promise<any> {
+    const filters = params.videoId ? `video==${params.videoId}` : undefined;
+    return this.getChannelAnalytics({
+      ...params,
+      metrics: ['views', 'estimatedMinutesWatched', 'averageViewDuration'],
+      dimensions: ['country'],
+      filters,
+      sort: '-views',
+      maxResults: 50
+    });
+  }
+
+  async getSubscriberAnalytics(params: DemographicsParams): Promise<any> {
+    const filters = params.videoId ? `video==${params.videoId}` : undefined;
+    return this.getChannelAnalytics({
+      ...params,
+      metrics: ['views', 'estimatedMinutesWatched', 'averageViewDuration'],
+      dimensions: ['subscribedStatus'],
+      filters
+    });
+  }
+
+  async getTrafficSources(params: DemographicsParams): Promise<any> {
+    const filters = params.videoId ? `video==${params.videoId}` : undefined;
+    return this.getChannelAnalytics({
+      ...params,
+      metrics: ['views', 'estimatedMinutesWatched'],
+      dimensions: ['insightTrafficSourceType'],
+      filters,
+      sort: '-views'
+    });
+  }
+
+  async getSearchTerms(params: DemographicsParams & { videoId: string }): Promise<any> {
+    return this.getChannelAnalytics({
+      ...params,
+      metrics: ['views'],
+      dimensions: ['insightTrafficSourceDetail'],
+      filters: `video==${params.videoId};insightTrafficSourceType==YT_SEARCH`,
+      sort: '-views',
+      maxResults: 25
+    });
   }
 
   // Utility methods

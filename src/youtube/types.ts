@@ -133,3 +133,27 @@ export interface ChannelHealthData {
   date: string;
   metrics: ChannelOverviewMetrics;
 }
+
+// Demographics and Discovery types
+export interface DemographicsParams extends AnalyticsParams {
+  videoId?: string;
+}
+
+export interface DemographicsData {
+  ageGroup: string;
+  gender: string;
+  viewerPercentage: number;
+}
+
+export interface GeographicData {
+  country: string;
+  views: number;
+  estimatedMinutesWatched: number;
+  averageViewDuration: number;
+}
+
+export interface TrafficSourceData {
+  sourceType: string;
+  views: number;
+  estimatedMinutesWatched: number;
+}

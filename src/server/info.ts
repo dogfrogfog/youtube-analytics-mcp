@@ -15,7 +15,7 @@ export function registerServerInfoTools(server: McpServer) {
         version: "1.0.0",
         status: "running",
         capabilities: ["tools", "resources", "prompts"],
-        description: "MCP server for YouTube Analytics data access"
+        description: "MCP server for YouTube Analytics data access with demographics and discovery tools"
       };
 
       if (format === "json") {

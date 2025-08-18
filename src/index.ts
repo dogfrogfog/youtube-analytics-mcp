@@ -8,6 +8,8 @@ import { registerAuthTools } from './auth/tools.js';
 import { registerServerInfoTools } from "./server/info.js";
 import { registerChannelTools } from './youtube/tools/channel.js';
 import { registerHealthTools } from './youtube/tools/health.js';
+import { registerAudienceTools } from './youtube/tools/audience.js';
+import { registerDiscoveryTools } from './youtube/tools/discovery.js';
 
 // Create server instance
 const server = new McpServer({
@@ -58,6 +60,8 @@ registerServerInfoTools(server);
 registerAuthTools(server, authManager, clearYouTubeClientCache);
 registerChannelTools(server, getYouTubeClient);
 registerHealthTools(server, getYouTubeClient);
+registerAudienceTools(server, getYouTubeClient);
+registerDiscoveryTools(server, getYouTubeClient);
 
 // Main server startup function
 async function main() {
