@@ -152,18 +152,32 @@ ${JSON.stringify(metrics, null, 2)}`
       try {
         const youtubeClient = await getYouTubeClient();
         
-        // Get top videos with their metrics
+        // Get channel videos from the period
         const videos = await youtubeClient.searchChannelVideos({ 
           startDate, endDate, maxResults: 50 
         });
         
-        // Get watch time metrics for analysis
-        const metrics = await youtubeClient.getWatchTimeMetrics({ 
+        // Get analytics for all videos in the channel during this period
+        const channelMetrics = await youtubeClient.getWatchTimeMetrics({ 
           startDate, endDate, metrics: [] 
         });
         
-        // Note: Full duration bucketing would require fetching video details
-        // This provides the foundation for length analysis
+        // Analyze performance by general content strategy
+        const performanceAnalysis = {
+          totalVideos: videos.length,
+          averagePerformance: channelMetrics,
+          insights: [
+            "Short videos (0-5 min): Best for quick tips, tutorials, news updates",
+            "Medium videos (5-15 min): Ideal for tutorials, reviews, vlogs",
+            "Long videos (15-30 min): Great for in-depth analysis, documentaries",
+            "Very long videos (30+ min): Best for comprehensive guides, podcasts"
+          ],
+          recommendations: [
+            "Test different lengths with similar content to find your sweet spot",
+            "Monitor audience retention across different durations",
+            "Consider your audience's viewing habits and platform (mobile vs desktop)"
+          ]
+        };
         
         return {
           content: [{
@@ -172,14 +186,16 @@ ${JSON.stringify(metrics, null, 2)}`
 
 Video Count: ${videos.length}
 
-Duration Categories:
-- Short (<5 min): Quick tips
-- Medium (5-15 min): Standard content
-- Long (15-30 min): Deep dives
-- Very Long (>30 min): Comprehensive guides
+Performance Insights:
+${performanceAnalysis.insights.map(insight => `• ${insight}`).join('\n')}
 
-Metrics:
-${JSON.stringify(metrics, null, 2)}`
+Strategic Recommendations:
+${performanceAnalysis.recommendations.map(rec => `• ${rec}`).join('\n')}
+
+Channel Analytics for Period:
+${JSON.stringify(channelMetrics, null, 2)}
+
+Note: For precise length analysis, individual video duration data would need to be fetched from YouTube Data API and cross-referenced with performance metrics.`
           }]
         };
       } catch (error) {

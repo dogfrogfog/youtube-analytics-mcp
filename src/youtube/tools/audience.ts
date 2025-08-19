@@ -151,6 +151,55 @@ ${JSON.stringify(deviceData, null, 2)}`
         const youtubeClient = await getYouTubeClient();
         const timingData = await youtubeClient.getOptimalPostingTime({ startDate, endDate });
         
+        // Check if timingData exists and has the expected structure
+        if (!timingData) {
+          return {
+            content: [{
+              type: "text",
+              text: `Optimal Posting Time Analysis (${startDate} to ${endDate}):
+
+No timing data available for the specified date range. This may be due to:
+- Insufficient data in the selected time period
+- API limitations
+- No videos published during this period
+
+Please try a different date range with more video activity.`
+            }]
+          };
+        }
+
+        // Safely handle bestDays array with null checks
+        let bestDaysText = 'No specific day performance data available';
+        if (Array.isArray(timingData.bestDays) && timingData.bestDays.length > 0) {
+          bestDaysText = timingData.bestDays.slice(0, 5).map((d: any) => {
+            const date = d.date || 'Unknown date';
+            const views = d.views ? d.views.toLocaleString() : '0';
+            const watchTime = d.watchTime ? Math.round(d.watchTime / 60).toLocaleString() : '0';
+            return `  ${date} - Views: ${views}, Watch Time: ${watchTime} min`;
+          }).join('\n');
+        }
+
+        // Safely handle general recommendations
+        let recommendationsText = 'No specific recommendations available';
+        if (timingData.generalRecommendations?.bestTimes && Array.isArray(timingData.generalRecommendations.bestTimes)) {
+          recommendationsText = timingData.generalRecommendations.bestTimes.map((time: string) => `• ${time}`).join('\n');
+        }
+
+        // Safely handle day of week insights
+        let dayInsightsText = 'No day-of-week patterns available';
+        if (timingData.dayOfWeekInsights && typeof timingData.dayOfWeekInsights === 'object') {
+          if (timingData.dayOfWeekInsights.message) {
+            dayInsightsText = timingData.dayOfWeekInsights.message;
+          } else {
+            // Format day of week data if available
+            const insights = Object.entries(timingData.dayOfWeekInsights)
+              .filter(([, data]: [string, any]) => data && typeof data === 'object' && data.avgViews)
+              .map(([day, data]: [string, any]) => `  ${day}: ${data.avgViews.toLocaleString()} avg views`)
+              .join('\n');
+            dayInsightsText = insights || 'Day-of-week data available but not formatted';
+          }
+        }
+
         return {
           content: [{
             type: "text",
@@ -158,11 +207,16 @@ ${JSON.stringify(deviceData, null, 2)}`
 
 Strategy: Schedule uploads for maximum initial velocity - first 2 hours are crucial for algorithm promotion!
 
-Best Hours (by average views):
-${timingData.bestHours.map((h: any) => `  ${h.hour}:00 - Avg: ${h.avgViews.toLocaleString()} views`).join('\n')}
+📅 Best Performing Days:
+${bestDaysText}
 
-Best Days (by total performance):
-${timingData.bestDays.slice(0, 3).map((d: any) => `  ${d.day} - Total: ${d.totalViews.toLocaleString()} views`).join('\n')}
+⏰ General Time Recommendations:
+${recommendationsText}
+
+📊 Day-of-Week Insights:
+${dayInsightsText}
+
+Strategy Note: ${timingData.generalRecommendations?.strategy || 'Upload when your audience is most active'}
 
 Full Analysis:
 ${JSON.stringify(timingData, null, 2)}`
