@@ -15,10 +15,8 @@ import {
 export class YouTubeClient {
   private youtube: youtube_v3.Youtube;
   private youtubeAnalytics: youtubeAnalytics_v2.Youtubeanalytics;
-  private auth: OAuth2Client;
 
   constructor(auth: OAuth2Client) {
-    this.auth = auth;
     this.youtube = google.youtube({ version: 'v3', auth });
     this.youtubeAnalytics = google.youtubeAnalytics({ version: 'v2', auth });
   }
@@ -623,7 +621,7 @@ export class YouTubeClient {
   async getCardEndScreenPerformance(params: { videoId: string; startDate: string; endDate: string }): Promise<any> {
     return this.getChannelAnalytics({
       ...params,
-      metrics: ['cardImpressions', 'cardClicks', 'cardClickRate', 'endScreenImpressions', 'endScreenClicks', 'endScreenClickRate'],
+      metrics: ['cardImpressions', 'cardClicks', 'cardClickRate'],
       dimensions: ['video'],
       filters: `video==${params.videoId}`,
       sort: 'video'

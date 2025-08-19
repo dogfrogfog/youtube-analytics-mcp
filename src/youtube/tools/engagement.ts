@@ -214,39 +214,33 @@ ${JSON.stringify(sharing, null, 2)}`
     }
   );
 
-  // Card & End Screen Performance Tool
+  // Card Performance Tool
   server.tool(
-    "get_card_endscreen_performance",
-    "Get card and end screen performance metrics for viewer journey optimization and improving video-to-video transitions",
+    "get_card_performance",
+    "Get card performance metrics for viewer engagement analysis and video-to-video navigation optimization",
     {
-      videoId: z.string().describe("Video ID to analyze (required for card/end screen data)"),
+      videoId: z.string().describe("Video ID to analyze (required for card data)"),
       startDate: z.string().describe("Start date (YYYY-MM-DD)"),
       endDate: z.string().describe("End date (YYYY-MM-DD)")
     },
     async ({ videoId, startDate, endDate }) => {
       try {
         const youtubeClient = await getYouTubeClient();
-        const cardEndScreen = await youtubeClient.getCardEndScreenPerformance({ 
+        const cardData = await youtubeClient.getCardEndScreenPerformance({ 
           videoId, startDate, endDate 
         });
         
-        // Extract metrics from the response
+        // Extract card metrics from the response
         let cardImpressions = 0;
         let cardClicks = 0;
         let cardClickRate = 0;
-        let endScreenImpressions = 0;
-        let endScreenClicks = 0;
-        let endScreenClickRate = 0;
         
-        if (cardEndScreen.rows && cardEndScreen.rows.length > 0) {
-          // Assuming single row for specific video
-          const row = cardEndScreen.rows[0];
+        if (cardData.rows && cardData.rows.length > 0) {
+          // Parse the response based on metrics order: cardImpressions, cardClicks, cardClickRate
+          const row = cardData.rows[0];
           cardImpressions = parseInt(row[1]) || 0;
           cardClicks = parseInt(row[2]) || 0;
           cardClickRate = parseFloat(row[3]) || 0;
-          endScreenImpressions = parseInt(row[4]) || 0;
-          endScreenClicks = parseInt(row[5]) || 0;
-          endScreenClickRate = parseFloat(row[6]) || 0;
         }
         
         // Generate performance insights
@@ -263,68 +257,66 @@ ${JSON.stringify(sharing, null, 2)}`
           insights.push("❌ No card data - consider adding cards to your videos");
         }
         
-        // End screen performance analysis
-        if (endScreenClickRate > 10) {
-          insights.push("🎯 Excellent end screen performance - great viewer retention");
-        } else if (endScreenClickRate > 5) {
-          insights.push("✅ Good end screen performance - viewers are continuing journey");
-        } else if (endScreenImpressions > 0) {
-          insights.push("⚠️ Low end screen click rate - improve end screen design");
-        } else {
-          insights.push("❌ No end screen data - add end screens to keep viewers engaged");
-        }
         
-        // Optimization strategies
+        // Card optimization strategies
         const strategies = [
-          "📍 Card Placement: Add cards at 30-60 seconds and mid-video",
-          "🎨 Visual Design: Use compelling thumbnails for promoted videos",
-          "📝 Messaging: Clear, benefit-focused card text",
-          "⏰ Timing: Place cards during natural breaks or topic transitions",
-          "🔗 Relevance: Promote related, high-performing content",
-          "📱 Mobile Optimization: Test card visibility on mobile devices"
+          "📍 Card Placement: Add cards at 30-60 seconds and mid-video during natural breaks",
+          "🎨 Visual Design: Use compelling thumbnails for promoted videos in cards",
+          "📝 Card Messaging: Clear, benefit-focused text that explains value",
+          "⏰ Card Timing: Place during natural pauses or topic transitions",
+          "🔗 Content Relevance: Promote related, high-performing content",
+          "📱 Mobile Optimization: Test card visibility on mobile devices",
+          "🎬 Card Types: Mix video, playlist, channel, and poll cards for variety",
+          "🎯 Call-to-Action: Include verbal prompts when cards appear",
+          "📊 A/B Testing: Test different card positions and timing strategies",
+          "🔄 Content Strategy: Use cards to guide viewers to your best content"
         ];
         
         return {
           content: [{
             type: "text",
-            text: `Card & End Screen Performance for video ${videoId} (${startDate} to ${endDate}):
+            text: `Card Performance Analysis for video ${videoId} (${startDate} to ${endDate}):
 
-📊 CARDS PERFORMANCE:
+📊 CARD PERFORMANCE METRICS:
 • Impressions: ${cardImpressions.toLocaleString()}
 • Clicks: ${cardClicks.toLocaleString()}
 • Click Rate: ${cardClickRate.toFixed(2)}%
 
-📊 END SCREEN PERFORMANCE:
-• Impressions: ${endScreenImpressions.toLocaleString()}
-• Clicks: ${endScreenClicks.toLocaleString()}
-• Click Rate: ${endScreenClickRate.toFixed(2)}%
-
 🎯 PERFORMANCE BENCHMARKS:
 • Card Click Rate: >5% Excellent | 2-5% Good | <2% Needs Work
-• End Screen Click Rate: >10% Excellent | 5-10% Good | <5% Needs Work
 
 💡 PERFORMANCE INSIGHTS:
 ${insights.map(insight => `${insight}`).join('\n')}
 
-🚀 OPTIMIZATION STRATEGIES:
+🚀 CARD OPTIMIZATION STRATEGIES:
 ${strategies.map(strategy => `${strategy}`).join('\n')}
 
-📈 IMPROVEMENT TACTICS:
+📈 CARD IMPROVEMENT TACTICS:
 • Test different card types (video, playlist, channel, poll)
-• Use compelling thumbnails for promoted content
-• Add verbal CTAs before cards appear
-• Optimize end screen layout for mobile viewing
-• Promote your best-performing videos
-• A/B test card timing and placement
+• Use compelling thumbnails for promoted content in cards
+• Add verbal CTAs when cards appear in your videos
+• Optimize card visibility and timing for mobile viewers
+• Promote your best-performing videos through cards
+• Create card-specific call-to-actions in your content
+• Use cards to build viewer journeys and playlists
+• Monitor card performance across different video types
 
-🎯 SUCCESS METRICS TO TRACK:
-• Session duration increase from cards/end screens
-• Subscriber conversion from promoted content
-• Playlist engagement from end screen promotions
+🎯 CARD SUCCESS METRICS TO TRACK:
+• Session duration increase from card clicks
+• Video-to-video navigation success rates
 • Click-through rates by card type and placement
+• Subscriber conversion from card interactions
+• Playlist engagement from card promotions
+• Card impression-to-click conversion rates
+
+💡 ADDITIONAL RECOMMENDATIONS:
+• Add end screens manually to your videos for complete viewer journey optimization
+• End screens are not tracked by YouTube Analytics API but are crucial for retention
+• Use YouTube Studio to monitor end screen performance manually
+• Combine cards and end screens for maximum viewer engagement
 
 Raw Data:
-${JSON.stringify(cardEndScreen, null, 2)}`
+${JSON.stringify(cardData, null, 2)}`
           }]
         };
       } catch (error) {
