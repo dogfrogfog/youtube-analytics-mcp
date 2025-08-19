@@ -11,6 +11,7 @@ import { registerHealthTools } from './youtube/tools/health.js';
 import { registerAudienceTools } from './youtube/tools/audience.js';
 import { registerDiscoveryTools } from './youtube/tools/discovery.js';
 import { registerPerformanceTools } from './youtube/tools/performance.js';
+import { registerEngagementTools } from './youtube/tools/engagement.js';
 
 // Create server instance
 const server = new McpServer({
@@ -63,6 +64,7 @@ registerHealthTools(server, getYouTubeClient);
 registerAudienceTools(server, getYouTubeClient);
 registerDiscoveryTools(server, getYouTubeClient);
 registerPerformanceTools(server, getYouTubeClient);
+registerEngagementTools(server, getYouTubeClient);
 
 async function main() {
   const transport = new StdioServerTransport();

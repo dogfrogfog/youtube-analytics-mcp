@@ -597,6 +597,39 @@ export class YouTubeClient {
     });
   }
 
+  // Engagement Analytics methods
+  async getEngagementMetrics(params: { videoId?: string; startDate: string; endDate: string }): Promise<any> {
+    const filter = params.videoId ? `video==${params.videoId}` : undefined;
+    return this.getChannelAnalytics({
+      ...params,
+      metrics: ['likes', 'dislikes', 'comments', 'shares', 'subscribersGained', 'subscribersLost', 'views'],
+      dimensions: ['day'],
+      filters: filter,
+      sort: 'day'
+    });
+  }
+
+  async getSharingAnalytics(params: { videoId?: string; startDate: string; endDate: string }): Promise<any> {
+    const filter = params.videoId ? `video==${params.videoId}` : undefined;
+    return this.getChannelAnalytics({
+      ...params,
+      metrics: ['shares'],
+      dimensions: ['sharingService'],
+      filters: filter,
+      sort: '-shares'
+    });
+  }
+
+  async getCardEndScreenPerformance(params: { videoId: string; startDate: string; endDate: string }): Promise<any> {
+    return this.getChannelAnalytics({
+      ...params,
+      metrics: ['cardImpressions', 'cardClicks', 'cardClickRate', 'endScreenImpressions', 'endScreenClicks', 'endScreenClickRate'],
+      dimensions: ['video'],
+      filters: `video==${params.videoId}`,
+      sort: 'video'
+    });
+  }
+
   // Utility methods
   private async withRetry<T>(fn: () => Promise<T>, maxRetries: number = 3): Promise<T> {
     for (let i = 0; i < maxRetries; i++) {
