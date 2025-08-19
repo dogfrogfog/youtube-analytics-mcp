@@ -8,7 +8,8 @@ import {
   SearchResult,
   VideoInfo,
   ComparisonResult,
-  DemographicsParams
+  DemographicsParams,
+  RetentionParams
 } from './types.js';
 
 export class YouTubeClient {
@@ -537,6 +538,52 @@ export class YouTubeClient {
       }))
       .sort((a, b) => b.totalViews - a.totalViews)
       .slice(0, 7);
+  }
+
+  // Content Performance Analytics methods
+  async getAudienceRetention(params: RetentionParams): Promise<any> {
+    return this.getVideoAnalytics(params.videoId, {
+      ...params,
+      metrics: ['audienceWatchRatio', 'relativeRetentionPerformance'],
+      dimensions: ['elapsedVideoTimeRatio'],
+      sort: 'elapsedVideoTimeRatio'
+    });
+  }
+
+  async getWatchTimeMetrics(params: DemographicsParams): Promise<any> {
+    const dimensions = params.videoId ? ['day'] : ['day', 'video'];
+    const filters = params.videoId ? `video==${params.videoId}` : undefined;
+    
+    return this.getChannelAnalytics({
+      ...params,
+      metrics: ['estimatedMinutesWatched', 'averageViewDuration', 'averageViewPercentage'],
+      dimensions,
+      filters,
+      sort: '-estimatedMinutesWatched',
+      maxResults: 100
+    });
+  }
+
+  async getPlaylistPerformance(params: DemographicsParams & { playlistId?: string }): Promise<any> {
+    const filters = params.playlistId ? `playlist==${params.playlistId}` : undefined;
+    
+    return this.getChannelAnalytics({
+      ...params,
+      metrics: ['playlistStarts', 'viewsPerPlaylistStart', 'averageTimeInPlaylist'],
+      dimensions: ['playlist'],
+      filters,
+      sort: '-playlistStarts',
+      maxResults: 20
+    });
+  }
+
+  async getViewerSessionTime(params: AnalyticsParams): Promise<any> {
+    return this.getChannelAnalytics({
+      ...params,
+      metrics: ['estimatedMinutesWatched', 'averageViewDuration'],
+      dimensions: ['day'],
+      sort: 'day'
+    });
   }
 
   // Utility methods

@@ -10,6 +10,7 @@ import { registerChannelTools } from './youtube/tools/channel.js';
 import { registerHealthTools } from './youtube/tools/health.js';
 import { registerAudienceTools } from './youtube/tools/audience.js';
 import { registerDiscoveryTools } from './youtube/tools/discovery.js';
+import { registerPerformanceTools } from './youtube/tools/performance.js';
 
 // Create server instance
 const server = new McpServer({
@@ -55,22 +56,20 @@ function clearYouTubeClientCache(): void {
   youtubeClientCache = null;
 }
 
-// Register all tools from domain modules
 registerServerInfoTools(server);
 registerAuthTools(server, authManager, clearYouTubeClientCache);
 registerChannelTools(server, getYouTubeClient);
 registerHealthTools(server, getYouTubeClient);
 registerAudienceTools(server, getYouTubeClient);
 registerDiscoveryTools(server, getYouTubeClient);
+registerPerformanceTools(server, getYouTubeClient);
 
-// Main server startup function
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
   console.error("YouTube Analytics MCP Server running on stdio");
 }
 
-// Handle graceful shutdown
 process.on('SIGINT', async () => {
   console.error("Shutting down server...");
   process.exit(0);
@@ -81,7 +80,6 @@ process.on('SIGTERM', async () => {
   process.exit(0);
 });
 
-// Start the server
 main().catch((error) => {
   console.error("Fatal error in main():", error);
   process.exit(1);

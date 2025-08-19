@@ -157,3 +157,35 @@ export interface TrafficSourceData {
   views: number;
   estimatedMinutesWatched: number;
 }
+
+// Content Performance Analytics types
+export interface RetentionParams extends AnalyticsParams {
+  videoId: string;
+}
+
+export interface RetentionPoint {
+  elapsedVideoTimeRatio: number;
+  audienceWatchRatio: number;
+  relativeRetentionPerformance?: number;
+}
+
+export interface RetentionDropOff {
+  timePercent: number;
+  dropAmount: number;
+  severity: 'critical' | 'warning';
+}
+
+// Watch time metrics types
+export interface WatchTimeMetrics {
+  estimatedMinutesWatched: number;
+  averageViewDuration: number;
+  averageViewPercentage: number;
+}
+
+// Playlist performance types
+export interface PlaylistPerformance {
+  playlistId?: string;
+  playlistStarts: number;
+  viewsPerPlaylistStart: number;
+  averageTimeInPlaylist: number;
+}
