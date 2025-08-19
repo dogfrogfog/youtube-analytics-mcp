@@ -98,4 +98,85 @@ export function registerAudienceTools(server: McpServer, getYouTubeClient: () =>
       }
     }
   );
+
+  // Device Type Analytics Tool
+  server.tool(
+    "get_device_type_analytics",
+    "Get device type breakdown (mobile/TV/desktop) for optimizing content format",
+    {
+      startDate: z.string().describe("Start date (YYYY-MM-DD)"),
+      endDate: z.string().describe("End date (YYYY-MM-DD)"),
+      videoId: z.string().optional().describe("Optional video ID for video-specific analysis")
+    },
+    async ({ startDate, endDate, videoId }) => {
+      try {
+        const youtubeClient = await getYouTubeClient();
+        const deviceData = await youtubeClient.getDeviceTypeAnalytics({ startDate, endDate, videoId, metrics: [] });
+        
+        return {
+          content: [{
+            type: "text",
+            text: `Device Type Analytics (${startDate} to ${endDate})${videoId ? ` for video ${videoId}` : ''}:
+
+Strategic Implications:
+• Mobile (>60%) → Vertical-friendly content, clear audio, large text
+• TV (>20%) → Cinema quality, longer content works better
+• Desktop → Complex tutorials, detailed content ideal
+
+${JSON.stringify(deviceData, null, 2)}`
+          }]
+        };
+      } catch (error) {
+        return {
+          content: [{
+            type: "text",
+            text: `Error: ${error instanceof Error ? error.message : String(error)}`
+          }],
+          isError: true
+        };
+      }
+    }
+  );
+
+  // Optimal Posting Time Tool
+  server.tool(
+    "get_optimal_posting_time",
+    "Find optimal posting times based on audience activity patterns",
+    {
+      startDate: z.string().describe("Start date (YYYY-MM-DD)"),
+      endDate: z.string().describe("End date (YYYY-MM-DD)")
+    },
+    async ({ startDate, endDate }) => {
+      try {
+        const youtubeClient = await getYouTubeClient();
+        const timingData = await youtubeClient.getOptimalPostingTime({ startDate, endDate });
+        
+        return {
+          content: [{
+            type: "text",
+            text: `Optimal Posting Time Analysis (${startDate} to ${endDate}):
+
+Strategy: Schedule uploads for maximum initial velocity - first 2 hours are crucial for algorithm promotion!
+
+Best Hours (by average views):
+${timingData.bestHours.map((h: any) => `  ${h.hour}:00 - Avg: ${h.avgViews.toLocaleString()} views`).join('\n')}
+
+Best Days (by total performance):
+${timingData.bestDays.slice(0, 3).map((d: any) => `  ${d.day} - Total: ${d.totalViews.toLocaleString()} views`).join('\n')}
+
+Full Analysis:
+${JSON.stringify(timingData, null, 2)}`
+          }]
+        };
+      } catch (error) {
+        return {
+          content: [{
+            type: "text",
+            text: `Error: ${error instanceof Error ? error.message : String(error)}`
+          }],
+          isError: true
+        };
+      }
+    }
+  );
 }

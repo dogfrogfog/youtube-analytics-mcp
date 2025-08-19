@@ -448,6 +448,97 @@ export class YouTubeClient {
     });
   }
 
+  async getDeviceTypeAnalytics(params: DemographicsParams): Promise<any> {
+    const filters = params.videoId ? `video==${params.videoId}` : undefined;
+    return this.getChannelAnalytics({
+      ...params,
+      metrics: ['views', 'estimatedMinutesWatched', 'averageViewDuration'],
+      dimensions: ['deviceType', 'operatingSystem'],
+      filters,
+      sort: '-views'
+    });
+  }
+
+  async getOptimalPostingTime(params: { startDate: string; endDate: string }): Promise<any> {
+    const response = await this.getChannelAnalytics({
+      ...params,
+      metrics: ['views', 'estimatedMinutesWatched'],
+      dimensions: ['day', 'hour'],
+      sort: 'day,hour'
+    });
+
+    const hourlyAverages = this.calculateHourlyAverages(response);
+    const bestDays = this.analyzeBestDays(response);
+
+    return {
+      hourlyAverages,
+      bestHours: hourlyAverages.slice(0, 3),
+      bestDays,
+      rawData: response
+    };
+  }
+
+  private calculateHourlyAverages(analyticsData: any): Array<{ hour: number; avgViews: number; avgWatchTime: number }> {
+    if (!analyticsData.rows || analyticsData.rows.length === 0) {
+      return [];
+    }
+
+    const hourlyData: { [hour: number]: { views: number; watchTime: number; count: number } } = {};
+
+    analyticsData.rows.forEach((row: any[]) => {
+      const day = row[0];
+      const hour = parseInt(row[1]);
+      const views = parseInt(row[2]) || 0;
+      const watchTime = parseInt(row[3]) || 0;
+
+      if (!hourlyData[hour]) {
+        hourlyData[hour] = { views: 0, watchTime: 0, count: 0 };
+      }
+
+      hourlyData[hour].views += views;
+      hourlyData[hour].watchTime += watchTime;
+      hourlyData[hour].count += 1;
+    });
+
+    return Object.entries(hourlyData)
+      .map(([hour, data]) => ({
+        hour: parseInt(hour),
+        avgViews: Math.round(data.views / data.count),
+        avgWatchTime: Math.round(data.watchTime / data.count)
+      }))
+      .sort((a, b) => b.avgViews - a.avgViews);
+  }
+
+  private analyzeBestDays(analyticsData: any): Array<{ day: string; totalViews: number; totalWatchTime: number }> {
+    if (!analyticsData.rows || analyticsData.rows.length === 0) {
+      return [];
+    }
+
+    const dailyData: { [day: string]: { views: number; watchTime: number } } = {};
+
+    analyticsData.rows.forEach((row: any[]) => {
+      const day = row[0];
+      const views = parseInt(row[2]) || 0;
+      const watchTime = parseInt(row[3]) || 0;
+
+      if (!dailyData[day]) {
+        dailyData[day] = { views: 0, watchTime: 0 };
+      }
+
+      dailyData[day].views += views;
+      dailyData[day].watchTime += watchTime;
+    });
+
+    return Object.entries(dailyData)
+      .map(([day, data]) => ({
+        day,
+        totalViews: data.views,
+        totalWatchTime: data.watchTime
+      }))
+      .sort((a, b) => b.totalViews - a.totalViews)
+      .slice(0, 7);
+  }
+
   // Utility methods
   private async withRetry<T>(fn: () => Promise<T>, maxRetries: number = 3): Promise<T> {
     for (let i = 0; i < maxRetries; i++) {
