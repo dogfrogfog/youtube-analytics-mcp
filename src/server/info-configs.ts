@@ -1,7 +1,7 @@
 import { z } from "zod";
-import { ToolConfig, ToolContext } from '../types.js';
+import { ToolConfig } from '../types.js';
 
-export const serverInfoToolConfigs: ToolConfig[] = [
+export const serverInfoTools: ToolConfig[] = [
   {
     name: "get_server_info",
     description: "Get information about the YouTube Analytics MCP server",

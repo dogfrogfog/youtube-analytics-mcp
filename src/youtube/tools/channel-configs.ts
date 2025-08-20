@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { ToolConfig, ToolContext } from '../../types.js';
 
-export const channelToolConfigs: ToolConfig[] = [
+export const channelTools: ToolConfig[] = [
   {
     name: "get_channel_info",
     description: "Get information about the authenticated YouTube channel",

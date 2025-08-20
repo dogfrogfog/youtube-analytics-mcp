@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { ToolConfig, ToolContext } from '../../types.js';
 
-export const audienceToolConfigs: ToolConfig[] = [
+export const audienceTools: ToolConfig[] = [
   {
     name: "get_video_demographics",
     description: "Get audience demographics (age/gender breakdown) for channel or specific video",

@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { ToolConfig, ToolContext } from '../../types.js';
 
-export const healthToolConfigs: ToolConfig[] = [
+export const healthTools: ToolConfig[] = [
   {
     name: "get_channel_overview",
     description: "Get channel vital signs - views, watch time, subscriber changes, and growth patterns",

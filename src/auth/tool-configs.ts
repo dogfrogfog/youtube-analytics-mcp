@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { ToolConfig, ToolContext } from '../types.js';
 
-export const authToolConfigs: ToolConfig[] = [
+export const authTools: ToolConfig[] = [
   {
     name: "check_auth_status",
     description: "Check if the user is authenticated with YouTube",

@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { ToolConfig, ToolContext } from '../../types.js';
 
-export const engagementToolConfigs: ToolConfig[] = [
+export const engagementTools: ToolConfig[] = [
   {
     name: "get_engagement_metrics",
     description: "Get engagement metrics (likes/comments/shares analysis) to measure viewer emotional investment and content interaction quality",

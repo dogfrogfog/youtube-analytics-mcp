@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { ToolConfig, ToolContext } from '../../types.js';
 
-export const performanceToolConfigs: ToolConfig[] = [
+export const performanceTools: ToolConfig[] = [
   {
     name: "get_audience_retention",
     description: "Track where viewers leave videos - identifies hook problems, pacing issues, and engagement drops",

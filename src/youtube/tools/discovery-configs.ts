@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { ToolConfig, ToolContext } from '../../types.js';
 
-export const discoveryToolConfigs: ToolConfig[] = [
+export const discoveryTools: ToolConfig[] = [
   {
     name: "get_traffic_sources",
     description: "Get traffic source analysis showing where viewers discover your content",

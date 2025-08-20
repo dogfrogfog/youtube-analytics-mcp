@@ -2,8 +2,8 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { AuthManager } from './auth/auth-manager.js';
 import { AuthenticationError } from './auth/types.js';
+import { allTools } from './tool-configs.js';
 import { YouTubeClient } from './youtube/youtube-client.js';
-import { allToolConfigs } from './tool-configs.js';
 
 // Create server instance
 const server = new McpServer({
@@ -49,8 +49,7 @@ function clearYouTubeClientCache(): void {
   youtubeClientCache = null;
 }
 
-// Register all tools from configuration using config-driven architecture
-allToolConfigs.forEach((toolConfig) => {
+allTools.forEach((toolConfig: any) => {
   server.tool(
     toolConfig.name,
     toolConfig.description,
