@@ -3,14 +3,20 @@ import { google, youtube_v3, youtubeAnalytics_v2 } from 'googleapis';
 import {
   AnalyticsParams,
   ChannelInfo,
-  QuotaExceededError,
-  RateLimitError,
-  SearchResult,
-  VideoInfo,
   ComparisonResult,
   DemographicsParams,
-  RetentionParams
+  QuotaExceededError,
+  RateLimitError,
+  RetentionParams,
+  SearchResult,
+  VideoInfo
 } from './types.js';
+import {
+  transformThumbnails,
+  transformVideoThumbnails,
+  transformSearchThumbnails,
+  transformRegionRestriction
+} from '../utils/transformers/thumbnails.js';
 
 export class YouTubeClient {
   private youtube: youtube_v3.Youtube;
@@ -43,7 +49,7 @@ export class YouTubeClient {
           description: channel.snippet!.description!,
           customUrl: channel.snippet!.customUrl || undefined,
           publishedAt: channel.snippet!.publishedAt!,
-          thumbnails: this.transformThumbnails(channel.snippet!.thumbnails!),
+          thumbnails: transformThumbnails(channel.snippet!.thumbnails!),
           country: channel.snippet!.country || undefined
         },
         statistics: {
@@ -85,7 +91,7 @@ export class YouTubeClient {
           channelId: item.snippet!.channelId!,
           title: item.snippet!.title!,
           description: item.snippet!.description!,
-          thumbnails: this.transformSearchThumbnails(item.snippet!.thumbnails!),
+          thumbnails: transformSearchThumbnails(item.snippet!.thumbnails!),
           channelTitle: item.snippet!.channelTitle!,
           liveBroadcastContent: item.snippet!.liveBroadcastContent!,
           publishTime: item.snippet!.publishedAt!
@@ -118,7 +124,7 @@ export class YouTubeClient {
           channelId: video.snippet!.channelId!,
           title: video.snippet!.title!,
           description: video.snippet!.description!,
-          thumbnails: this.transformVideoThumbnails(video.snippet!.thumbnails!),
+          thumbnails: transformVideoThumbnails(video.snippet!.thumbnails!),
           channelTitle: video.snippet!.channelTitle!,
           tags: video.snippet!.tags || undefined,
           categoryId: video.snippet!.categoryId!,
@@ -138,7 +144,7 @@ export class YouTubeClient {
           definition: video.contentDetails!.definition!,
           caption: video.contentDetails!.caption!,
           licensedContent: video.contentDetails!.licensedContent!,
-          regionRestriction: this.transformRegionRestriction(video.contentDetails!.regionRestriction)
+          regionRestriction: transformRegionRestriction(video.contentDetails!.regionRestriction)
         }
       };
     } catch (error) {
@@ -176,7 +182,7 @@ export class YouTubeClient {
           channelId: item.snippet!.channelId!,
           title: item.snippet!.title!,
           description: item.snippet!.description!,
-          thumbnails: this.transformSearchThumbnails(item.snippet!.thumbnails!),
+          thumbnails: transformSearchThumbnails(item.snippet!.thumbnails!),
           channelTitle: item.snippet!.channelTitle!,
           liveBroadcastContent: item.snippet!.liveBroadcastContent!,
           publishTime: item.snippet!.publishedAt!
@@ -239,7 +245,7 @@ export class YouTubeClient {
           channelId: item.snippet!.channelId!,
           title: item.snippet!.title!,
           description: item.snippet!.description!,
-          thumbnails: this.transformSearchThumbnails(item.snippet!.thumbnails!),
+          thumbnails: transformSearchThumbnails(item.snippet!.thumbnails!),
           channelTitle: item.snippet!.channelTitle!,
           liveBroadcastContent: item.snippet!.liveBroadcastContent!,
           publishTime: item.snippet!.publishedAt!
@@ -612,35 +618,4 @@ export class YouTubeClient {
     });
   }
 
-  // Helper methods for type transformations
-  private transformThumbnails(thumbnails: any, includeHighRes: boolean = false): any {
-    const result: any = {
-      default: thumbnails?.default?.url ? { url: thumbnails.default.url } : undefined,
-      medium: thumbnails?.medium?.url ? { url: thumbnails.medium.url } : undefined,
-      high: thumbnails?.high?.url ? { url: thumbnails.high.url } : undefined
-    };
-    
-    if (includeHighRes) {
-      result.standard = thumbnails?.standard?.url ? { url: thumbnails.standard.url } : undefined;
-      result.maxres = thumbnails?.maxres?.url ? { url: thumbnails.maxres.url } : undefined;
-    }
-    
-    return result;
-  }
-
-  private transformVideoThumbnails(thumbnails: any) {
-    return this.transformThumbnails(thumbnails, true);
-  }
-
-  private transformSearchThumbnails(thumbnails: any) {
-    return this.transformThumbnails(thumbnails, false);
-  }
-
-  private transformRegionRestriction(restriction: any): { allowed?: string[]; blocked?: string[] } | undefined {
-    if (!restriction) return undefined;
-    return {
-      allowed: restriction.allowed || undefined,
-      blocked: restriction.blocked || undefined
-    };
-  }
 }
