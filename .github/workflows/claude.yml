@@ -29,9 +29,25 @@ jobs:
         with:
           fetch-depth: 1
 
+      - name: Determine prompt
+        id: get_prompt
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" == "issue_comment" ] || [ "${{ github.event_name }}" == "pull_request_review_comment" ]; then
+            PROMPT=$(echo "${{ github.event.comment.body }}" | sed 's/@claude//g' | xargs)
+            echo "prompt=$PROMPT" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event_name }}" == "pull_request_review" ]; then
+            PROMPT=$(echo "${{ github.event.review.body }}" | sed 's/@claude//g' | xargs)
+            echo "prompt=$PROMPT" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event_name }}" == "issues" ]; then
+            PROMPT=$(echo "${{ github.event.issue.title }} ${{ github.event.issue.body }}" | sed 's/@claude//g' | xargs)
+            echo "prompt=$PROMPT" >> $GITHUB_OUTPUT
+          fi
+
       - name: Run Claude Code
         id: claude
         uses: anthropics/claude-code-base-action@beta
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: ${{ steps.get_prompt.outputs.prompt }}
 
