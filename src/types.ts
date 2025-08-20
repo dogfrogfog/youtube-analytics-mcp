@@ -33,3 +33,29 @@ export class TokenExpiredError extends AuthenticationError {
     this.name = 'TokenExpiredError';
   }
 }
+
+// New config-driven architecture types
+export interface ToolResult {
+  [key: string]: unknown;
+  content: Array<{
+    type: "text";
+    text: string;
+    _meta?: Record<string, unknown>;
+  }>;
+  isError?: boolean;
+  _meta?: Record<string, unknown>;
+}
+
+export interface ToolContext {
+  authManager: any;
+  getYouTubeClient: () => Promise<any>;
+  clearYouTubeClientCache: () => void;
+}
+
+export interface ToolConfig<T = any> {
+  name: string;
+  description: string;
+  schema: any; // Zod schema
+  handler: (params: T, context: ToolContext) => Promise<ToolResult>;
+  category?: string; // Optional grouping
+}

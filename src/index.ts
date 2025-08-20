@@ -2,16 +2,8 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { AuthManager } from './auth/auth-manager.js';
 import { AuthenticationError } from './auth/types.js';
+import { allTools } from './tool-configs.js';
 import { YouTubeClient } from './youtube/youtube-client.js';
-
-import { registerAuthTools } from './auth/tools.js';
-import { registerServerInfoTools } from "./server/info.js";
-import { registerChannelTools } from './youtube/tools/channel.js';
-import { registerHealthTools } from './youtube/tools/health.js';
-import { registerAudienceTools } from './youtube/tools/audience.js';
-import { registerDiscoveryTools } from './youtube/tools/discovery.js';
-import { registerPerformanceTools } from './youtube/tools/performance.js';
-import { registerEngagementTools } from './youtube/tools/engagement.js';
 
 // Create server instance
 const server = new McpServer({
@@ -57,14 +49,20 @@ function clearYouTubeClientCache(): void {
   youtubeClientCache = null;
 }
 
-registerServerInfoTools(server);
-registerAuthTools(server, authManager, clearYouTubeClientCache);
-registerChannelTools(server, getYouTubeClient);
-registerHealthTools(server, getYouTubeClient);
-registerAudienceTools(server, getYouTubeClient);
-registerDiscoveryTools(server, getYouTubeClient);
-registerPerformanceTools(server, getYouTubeClient);
-registerEngagementTools(server, getYouTubeClient);
+allTools.forEach((toolConfig: any) => {
+  server.tool(
+    toolConfig.name,
+    toolConfig.description,
+    {},
+    async (params: any) => {
+      return toolConfig.handler(params, { 
+        authManager, 
+        getYouTubeClient, 
+        clearYouTubeClientCache 
+      });
+    }
+  );
+});
 
 async function main() {
   const transport = new StdioServerTransport();
