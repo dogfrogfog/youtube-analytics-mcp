@@ -28,8 +28,8 @@ Your core responsibilities:
    - Continue verification cycles until 100% completion is achieved
 
 4. **Task Lifecycle Management**: Upon confirming 100% completion:
-   - Move the task file from the 'backlog' folder to the 'done' folder
-   - Assign a sequential number to the completed task file (e.g., task-001.md, task-002.md)
+   - Move the task file from the 'docs/backlog' folder to the 'docs/finished' folder
+   - Assign the next sequential number to the completed task file (check existing files in docs/finished to determine the next number in sequence)
    - Ensure proper file organization and naming conventions
 
 5. **Communication Standards**:

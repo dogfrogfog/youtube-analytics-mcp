@@ -461,85 +461,14 @@ export class YouTubeClient {
   async getOptimalPostingTime(params: { startDate: string; endDate: string }): Promise<any> {
     // YouTube Analytics API v2 doesn't support hour dimension
     // We'll analyze by day of week and provide strategic insights
-    const response = await this.getChannelAnalytics({
+    return await this.getChannelAnalytics({
       ...params,
       metrics: ['views', 'estimatedMinutesWatched', 'subscribersGained'],
       dimensions: ['day'],
       sort: 'day'
     });
-
-    const dayOfWeekAnalysis = this.analyzeDayOfWeekPatterns(response);
-    const bestPerformingDays = this.identifyBestDays(response);
-
-    return {
-      bestDays: bestPerformingDays,
-      dayOfWeekInsights: dayOfWeekAnalysis,
-      generalRecommendations: {
-        bestTimes: [
-          "Tuesday-Thursday: 2:00 PM - 4:00 PM (highest engagement)",
-          "Saturday-Sunday: 9:00 AM - 11:00 AM (weekend audience)",
-          "Avoid Fridays after 3:00 PM and Monday mornings"
-        ],
-        strategy: "Upload 2 hours before peak audience activity for maximum algorithm boost"
-      },
-      rawData: response
-    };
   }
 
-  private analyzeDayOfWeekPatterns(analyticsData: any): any {
-    if (!analyticsData.rows || analyticsData.rows.length === 0) {
-      return { message: "No data available for day of week analysis" };
-    }
-
-    const dayData: { [dayOfWeek: string]: { views: number; watchTime: number; subscribers: number; count: number } } = {};
-    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-
-    analyticsData.rows.forEach((row: any[]) => {
-      const dateStr = row[0]; // YYYY-MM-DD format
-      const views = parseInt(row[1]) || 0;
-      const watchTime = parseInt(row[2]) || 0;
-      const subscribers = parseInt(row[3]) || 0;
-
-      const date = new Date(dateStr);
-      const dayOfWeek = dayNames[date.getDay()];
-
-      if (!dayData[dayOfWeek]) {
-        dayData[dayOfWeek] = { views: 0, watchTime: 0, subscribers: 0, count: 0 };
-      }
-
-      dayData[dayOfWeek].views += views;
-      dayData[dayOfWeek].watchTime += watchTime;
-      dayData[dayOfWeek].subscribers += subscribers;
-      dayData[dayOfWeek].count += 1;
-    });
-
-    return Object.entries(dayData)
-      .map(([day, data]) => ({
-        dayOfWeek: day,
-        avgViews: data.count > 0 ? Math.round(data.views / data.count) : 0,
-        avgWatchTime: data.count > 0 ? Math.round(data.watchTime / data.count) : 0,
-        avgSubscribers: data.count > 0 ? Math.round(data.subscribers / data.count) : 0,
-        totalDays: data.count
-      }))
-      .sort((a, b) => b.avgViews - a.avgViews);
-  }
-
-  private identifyBestDays(analyticsData: any): Array<{ date: string; views: number; watchTime: number; score: number }> {
-    if (!analyticsData.rows || analyticsData.rows.length === 0) {
-      return [];
-    }
-
-    return analyticsData.rows
-      .map((row: any[]) => ({
-        date: row[0],
-        views: parseInt(row[1]) || 0,
-        watchTime: parseInt(row[2]) || 0,
-        subscribers: parseInt(row[3]) || 0,
-        score: (parseInt(row[1]) || 0) * 0.6 + (parseInt(row[2]) || 0) * 0.3 + (parseInt(row[3]) || 0) * 0.1
-      }))
-      .sort((a: any, b: any) => b.score - a.score)
-      .slice(0, 10);
-  }
 
 
   // Content Performance Analytics methods
@@ -679,30 +608,27 @@ export class YouTubeClient {
   }
 
   // Helper methods for type transformations
-  private transformThumbnails(thumbnails: any): { default?: { url: string }; medium?: { url: string }; high?: { url: string } } {
-    return {
-      default: thumbnails.default?.url ? { url: thumbnails.default.url } : undefined,
-      medium: thumbnails.medium?.url ? { url: thumbnails.medium.url } : undefined,
-      high: thumbnails.high?.url ? { url: thumbnails.high.url } : undefined
+  private transformThumbnails(thumbnails: any, includeHighRes: boolean = false): any {
+    const result: any = {
+      default: thumbnails?.default?.url ? { url: thumbnails.default.url } : undefined,
+      medium: thumbnails?.medium?.url ? { url: thumbnails.medium.url } : undefined,
+      high: thumbnails?.high?.url ? { url: thumbnails.high.url } : undefined
     };
+    
+    if (includeHighRes) {
+      result.standard = thumbnails?.standard?.url ? { url: thumbnails.standard.url } : undefined;
+      result.maxres = thumbnails?.maxres?.url ? { url: thumbnails.maxres.url } : undefined;
+    }
+    
+    return result;
   }
 
-  private transformVideoThumbnails(thumbnails: any): { default?: { url: string }; medium?: { url: string }; high?: { url: string }; standard?: { url: string }; maxres?: { url: string } } {
-    return {
-      default: thumbnails.default?.url ? { url: thumbnails.default.url } : undefined,
-      medium: thumbnails.medium?.url ? { url: thumbnails.medium.url } : undefined,
-      high: thumbnails.high?.url ? { url: thumbnails.high.url } : undefined,
-      standard: thumbnails.standard?.url ? { url: thumbnails.standard.url } : undefined,
-      maxres: thumbnails.maxres?.url ? { url: thumbnails.maxres.url } : undefined
-    };
+  private transformVideoThumbnails(thumbnails: any) {
+    return this.transformThumbnails(thumbnails, true);
   }
 
-  private transformSearchThumbnails(thumbnails: any): { default?: { url: string }; medium?: { url: string }; high?: { url: string } } {
-    return {
-      default: thumbnails.default?.url ? { url: thumbnails.default.url } : undefined,
-      medium: thumbnails.medium?.url ? { url: thumbnails.medium.url } : undefined,
-      high: thumbnails.high?.url ? { url: thumbnails.high.url } : undefined
-    };
+  private transformSearchThumbnails(thumbnails: any) {
+    return this.transformThumbnails(thumbnails, false);
   }
 
   private transformRegionRestriction(restriction: any): { allowed?: string[]; blocked?: string[] } | undefined {

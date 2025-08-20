@@ -52,10 +52,18 @@ export interface ToolContext {
   clearYouTubeClientCache: () => void;
 }
 
+// Formatter function types for separating business logic from API calls
+export type FormatterFunction = (data: any) => string;
+
+export interface Formatters {
+  [key: string]: FormatterFunction;
+}
+
 export interface ToolConfig<T = any> {
   name: string;
   description: string;
   schema: any; // Zod schema
   handler: (params: T, context: ToolContext) => Promise<ToolResult>;
   category?: string; // Optional grouping
+  formatters?: Formatters; // Optional formatter functions for data presentation
 }
