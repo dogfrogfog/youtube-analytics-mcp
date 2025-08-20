@@ -1,5 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { z } from 'zod';
 import { AuthManager } from './auth/auth-manager.js';
 import { AuthenticationError } from './auth/types.js';
 import { allTools } from './tool-configs.js';
@@ -49,20 +50,39 @@ function clearYouTubeClientCache(): void {
   youtubeClientCache = null;
 }
 
+// Register all tools
 allTools.forEach((toolConfig: any) => {
-  server.tool(
+  console.error(`Registering tool: ${toolConfig.name}`);
+  
+  server.registerTool(
     toolConfig.name,
-    toolConfig.description,
-    {},
+    {
+      description: toolConfig.description,
+      inputSchema: toolConfig.schema?.shape || {},
+    },
     async (params: any) => {
-      return toolConfig.handler(params, { 
-        authManager, 
-        getYouTubeClient, 
-        clearYouTubeClientCache 
-      });
+      try {
+        console.error(`Executing tool: ${toolConfig.name}`);
+        return await toolConfig.handler(params, { 
+          authManager, 
+          getYouTubeClient, 
+          clearYouTubeClientCache 
+        });
+      } catch (error) {
+        console.error(`Error in tool ${toolConfig.name}:`, error);
+        return {
+          content: [{
+            type: "text",
+            text: `Error executing ${toolConfig.name}: ${error instanceof Error ? error.message : String(error)}`
+          }],
+          isError: true
+        };
+      }
     }
   );
 });
+
+console.error(`Total tools registered: ${allTools.length}`);
 
 async function main() {
   const transport = new StdioServerTransport();

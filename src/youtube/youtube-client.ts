@@ -339,6 +339,11 @@ export class YouTubeClient {
     period2End: string;
   }): Promise<ComparisonResult<any>> {
     try {
+      // Validate required parameters
+      if (!params.metrics || !Array.isArray(params.metrics)) {
+        throw new Error("metrics parameter is required and must be an array");
+      }
+
       const [period1, period2] = await Promise.all([
         this.withRetry(async () => {
           return await this.youtubeAnalytics.reports.query({

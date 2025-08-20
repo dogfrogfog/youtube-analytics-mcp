@@ -59,6 +59,18 @@ export interface Formatters {
   [key: string]: FormatterFunction;
 }
 
+// Helper function to wrap formatters with error handling
+export function safeFormatter(formatterName: string, formatter: FormatterFunction): FormatterFunction {
+  return (data: any): string => {
+    try {
+      return formatter(data);
+    } catch (error) {
+      console.error(`Error in formatter ${formatterName}:`, error);
+      return `Error formatting data for ${formatterName}: ${error instanceof Error ? error.message : String(error)}`;
+    }
+  };
+}
+
 export interface ToolConfig<T = any> {
   name: string;
   description: string;

@@ -1,8 +1,8 @@
 import { z } from "zod";
-import { ToolConfig, ToolContext, Formatters } from '../../types.js';
+import { ToolConfig, ToolContext, Formatters, safeFormatter } from '../../types.js';
 
 // Formatters for audience-related data presentation
-const audienceFormatters: Formatters = {
+const audienceFormattersRaw = {
   demographics: (data: any): string => {
     if (!data || !data.rows || data.rows.length === 0) {
       return "No demographic data available for the specified period.";
@@ -121,6 +121,13 @@ const audienceFormatters: Formatters = {
 
     return output;
   }
+};
+
+// Wrap formatters with error handling
+const audienceFormatters: Formatters = {
+  demographics: safeFormatter('demographics', audienceFormattersRaw.demographics),
+  geographic: safeFormatter('geographic', audienceFormattersRaw.geographic),
+  subscriberAnalytics: safeFormatter('subscriberAnalytics', audienceFormattersRaw.subscriberAnalytics)
 };
 
 export const audienceTools: ToolConfig[] = [

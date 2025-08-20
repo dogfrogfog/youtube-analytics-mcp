@@ -1,8 +1,8 @@
 import { z } from "zod";
-import { ToolConfig, ToolContext, Formatters } from '../../types.js';
+import { ToolConfig, ToolContext, Formatters, safeFormatter } from '../../types.js';
 
 // Formatters for health-related data presentation
-const healthFormatters: Formatters = {
+const healthFormattersRaw = {
   channelOverview: (data: any): string => {
     if (!data || !data.rows || data.rows.length === 0) {
       return "No channel overview data available for the specified date range.";
@@ -86,6 +86,12 @@ const healthFormatters: Formatters = {
 
     return output;
   }
+};
+
+// Wrap formatters with error handling
+const healthFormatters: Formatters = {
+  channelOverview: safeFormatter('channelOverview', healthFormattersRaw.channelOverview),
+  comparisonMetrics: safeFormatter('comparisonMetrics', healthFormattersRaw.comparisonMetrics)
 };
 
 export const healthTools: ToolConfig[] = [
