@@ -1,6 +1,12 @@
 import { OAuth2Client } from 'google-auth-library';
 import { google, youtube_v3, youtubeAnalytics_v2 } from 'googleapis';
 import {
+  transformRegionRestriction,
+  transformSearchThumbnails,
+  transformThumbnails,
+  transformVideoThumbnails
+} from '../utils/transformers/thumbnails.js';
+import {
   AnalyticsParams,
   ChannelInfo,
   ComparisonResult,
@@ -11,20 +17,14 @@ import {
   SearchResult,
   VideoInfo
 } from './types.js';
-import {
-  transformThumbnails,
-  transformVideoThumbnails,
-  transformSearchThumbnails,
-  transformRegionRestriction
-} from '../utils/transformers/thumbnails.js';
 
 export class YouTubeClient {
   private youtube: youtube_v3.Youtube;
   private youtubeAnalytics: youtubeAnalytics_v2.Youtubeanalytics;
 
-  constructor(auth: OAuth2Client) {
-    this.youtube = google.youtube({ version: 'v3', auth });
-    this.youtubeAnalytics = google.youtubeAnalytics({ version: 'v2', auth });
+  constructor(private auth: OAuth2Client) {
+    this.youtube = google.youtube({ version: 'v3', auth: this.auth });
+    this.youtubeAnalytics = google.youtubeAnalytics({ version: 'v2', auth: this.auth });
   }
 
   // YouTube Data API methods
@@ -349,7 +349,7 @@ export class YouTubeClient {
       if (!params.metrics || !Array.isArray(params.metrics)) {
         throw new Error("metrics parameter is required and must be an array");
       }
-
+      
       const [period1, period2] = await Promise.all([
         this.withRetry(async () => {
           return await this.youtubeAnalytics.reports.query({
