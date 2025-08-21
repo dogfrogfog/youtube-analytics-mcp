@@ -1,12 +1,18 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { z } from 'zod';
-import { AuthManager } from './auth/auth-manager.js';
-import { AuthenticationError } from './auth/types.js';
+import { OAuth2Client } from "google-auth-library";
+import { createAuth } from 'google-auth-mcp';
 import { allTools } from './tool-configs.js';
 import { YouTubeClient } from './youtube/youtube-client.js';
 
-// Create server instance
+const auth = createAuth({
+  scopes: [
+    'https://www.googleapis.com/auth/youtube.readonly',
+    'https://www.googleapis.com/auth/yt-analytics.readonly',
+    'https://www.googleapis.com/auth/youtubepartner'
+  ]
+});
+
 const server = new McpServer({
   name: "youtube-analytics-mcp",
   version: "1.0.0",
@@ -16,9 +22,6 @@ const server = new McpServer({
     prompts: {},
   },
 });
-
-// Initialize auth manager
-const authManager = new AuthManager();
 
 // Cache for YouTube client
 let youtubeClientCache: YouTubeClient | null = null;
@@ -31,16 +34,17 @@ async function getYouTubeClient(): Promise<YouTubeClient> {
       return youtubeClientCache;
     }
 
-    const auth = await authManager.getAuthClient();
-    youtubeClientCache = new YouTubeClient(auth);
+    if (!await auth.getAccessToken()) {
+      throw new Error('Not authenticated. Please authenticate first.');
+    }
+
+    const client = await auth.getClient();
+
+    youtubeClientCache = new YouTubeClient(client as unknown as OAuth2Client);
     return youtubeClientCache;
   } catch (error) {
     // Clear cache on error
     youtubeClientCache = null;
-    
-    if (error instanceof AuthenticationError) {
-      throw new Error(`Authentication failed: ${error.message}`);
-    }
     throw new Error(`Failed to get YouTube client: ${error}`);
   }
 }
@@ -64,7 +68,7 @@ allTools.forEach((toolConfig: any) => {
       try {
         console.error(`Executing tool: ${toolConfig.name}`);
         return await toolConfig.handler(params, { 
-          authManager, 
+          auth, 
           getYouTubeClient, 
           clearYouTubeClientCache 
         });

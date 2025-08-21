@@ -7,14 +7,14 @@ export const authTools: ToolConfig[] = [
     description: "Check if the user is authenticated with YouTube",
     category: "authentication",
     schema: z.object({}),
-    handler: async (_, { authManager }: ToolContext) => {
+    handler: async (_, { auth }: ToolContext) => {
       try {
-        const isAuthenticated = await authManager.isAuthenticated();
+        const authenticated = await auth.isAuthenticated();
         
         return {
           content: [{
             type: "text",
-            text: `Authentication Status: ${isAuthenticated ? 'Authenticated' : 'Not Authenticated'}`
+            text: `Authentication Status: ${authenticated ? 'Authenticated' : 'Not Authenticated'}`
           }]
         };
       } catch (error) {
@@ -33,9 +33,9 @@ export const authTools: ToolConfig[] = [
     description: "Revoke YouTube authentication and remove stored tokens",
     category: "authentication",
     schema: z.object({}),
-    handler: async (_, { authManager, clearYouTubeClientCache }: ToolContext) => {
+    handler: async (_, { auth, clearYouTubeClientCache }: ToolContext) => {
       try {
-        await authManager.revokeToken();
+        await auth.signOut();
         
         // Clear YouTube client cache
         clearYouTubeClientCache();
