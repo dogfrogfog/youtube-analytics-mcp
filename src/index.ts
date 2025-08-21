@@ -1,5 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { OAuth2Client } from "google-auth-library";
 import { createAuth } from 'google-auth-mcp';
 import { allTools } from './tool-configs.js';
 import { YouTubeClient } from './youtube/youtube-client.js';
@@ -39,7 +40,7 @@ async function getYouTubeClient(): Promise<YouTubeClient> {
 
     const client = await auth.getClient();
 
-    youtubeClientCache = new YouTubeClient(client as any);
+    youtubeClientCache = new YouTubeClient(client as unknown as OAuth2Client);
     return youtubeClientCache;
   } catch (error) {
     // Clear cache on error
