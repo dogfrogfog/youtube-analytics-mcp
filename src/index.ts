@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { AuthManager } from './auth/auth-manager.js';
 import { AuthenticationError } from './auth/types.js';
 import { allTools } from './tool-configs.js';
+import { allPrompts } from './prompt-configs.js';
 import { YouTubeClient } from './youtube/youtube-client.js';
 
 // Create server instance
@@ -83,6 +84,37 @@ allTools.forEach((toolConfig: any) => {
 });
 
 console.error(`Total tools registered: ${allTools.length}`);
+
+// Register all prompts
+allPrompts.forEach((promptConfig: any) => {
+  console.error(`Registering prompt: ${promptConfig.name}`);
+  
+  server.registerPrompt(
+    promptConfig.name,
+    {
+      title: promptConfig.title,
+      description: promptConfig.description,
+      argsSchema: promptConfig.argsSchema,
+    },
+    async (args: any) => {
+      try {
+        console.error(`Executing prompt: ${promptConfig.name}`);
+        return await promptConfig.handler(args);
+      } catch (error) {
+        console.error(`Error in prompt ${promptConfig.name}:`, error);
+        return {
+          content: [{
+            type: "text",
+            text: `Error executing ${promptConfig.name}: ${error instanceof Error ? error.message : String(error)}`
+          }],
+          isError: true
+        };
+      }
+    }
+  );
+});
+
+console.error(`Total prompts registered: ${allPrompts.length}`);
 
 async function main() {
   const transport = new StdioServerTransport();
