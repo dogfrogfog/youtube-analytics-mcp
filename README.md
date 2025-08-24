@@ -135,7 +135,22 @@ export const allToolConfigs = [
 6. **Maintainability**: Consistent patterns across all tools
 7. **Scalability**: Easy to manage many tools without cluttering main file
 
-## Development
+## Setup
+
+### 1. Google API Credentials
+
+To use this YouTube Analytics MCP server, you need to set up Google API credentials:
+
+1. Go to the [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select an existing one
+3. Enable the YouTube Analytics API and YouTube Data API v3
+4. Go to "Credentials" and create a new OAuth 2.0 Client ID
+5. Download the credentials as JSON
+6. Save the file as `credentials.json` in the `src/auth/` directory
+
+**Privacy Note**: All data processing happens locally on your computer. Your credentials and analytics data never leave your machine - the server runs entirely locally and connects directly to Google's APIs from your system.
+
+### 2. Development
 
 ```bash
 # Install dependencies
