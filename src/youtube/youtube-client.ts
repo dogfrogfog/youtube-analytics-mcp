@@ -482,6 +482,136 @@ export class YouTubeClient {
 
 
 
+  // New methods for trends and competitor analysis
+  async getTrendingVideos(params: {
+    regionCode?: string;
+    categoryId?: string;
+    maxResults?: number;
+  }): Promise<VideoInfo[]> {
+    try {
+      const { regionCode, categoryId, maxResults = 25 } = params;
+      
+      const response = await this.withRetry(async () => {
+        return await this.youtube.videos.list({
+          part: ['snippet', 'statistics', 'contentDetails'],
+          chart: 'mostPopular',
+          regionCode,
+          videoCategoryId: categoryId,
+          maxResults: Math.min(maxResults, 50)
+        });
+      });
+
+      return response.data.items?.map(video => ({
+        id: video.id!,
+        snippet: {
+          publishedAt: video.snippet!.publishedAt!,
+          channelId: video.snippet!.channelId!,
+          title: video.snippet!.title!,
+          description: video.snippet!.description!,
+          thumbnails: transformVideoThumbnails(video.snippet!.thumbnails!),
+          channelTitle: video.snippet!.channelTitle!,
+          tags: video.snippet!.tags || undefined,
+          categoryId: video.snippet!.categoryId!,
+          liveBroadcastContent: video.snippet!.liveBroadcastContent!,
+          defaultLanguage: video.snippet!.defaultLanguage || undefined,
+          defaultAudioLanguage: video.snippet!.defaultAudioLanguage || undefined
+        },
+        statistics: {
+          viewCount: video.statistics!.viewCount!,
+          likeCount: video.statistics!.likeCount!,
+          favoriteCount: video.statistics!.favoriteCount!,
+          commentCount: video.statistics!.commentCount!
+        },
+        contentDetails: {
+          duration: video.contentDetails!.duration!,
+          dimension: video.contentDetails!.dimension!,
+          definition: video.contentDetails!.definition!,
+          caption: video.contentDetails!.caption!,
+          licensedContent: video.contentDetails!.licensedContent!,
+          regionRestriction: transformRegionRestriction(video.contentDetails!.regionRestriction)
+        }
+      })) || [];
+    } catch (error) {
+      this.handleApiError(error);
+      throw error;
+    }
+  }
+
+  async getPublicChannelInfo(channelId: string): Promise<ChannelInfo> {
+    try {
+      const response = await this.withRetry(async () => {
+        return await this.youtube.channels.list({
+          part: ['snippet', 'statistics'],
+          id: [channelId]
+        });
+      });
+
+      if (!response.data.items || response.data.items.length === 0) {
+        throw new Error(`Channel not found: ${channelId}`);
+      }
+
+      const channel = response.data.items[0];
+      return {
+        id: channel.id!,
+        snippet: {
+          title: channel.snippet!.title!,
+          description: channel.snippet!.description!,
+          customUrl: channel.snippet!.customUrl || undefined,
+          publishedAt: channel.snippet!.publishedAt!,
+          thumbnails: transformThumbnails(channel.snippet!.thumbnails!),
+          country: channel.snippet!.country || undefined
+        },
+        statistics: {
+          viewCount: channel.statistics!.viewCount!,
+          subscriberCount: channel.statistics!.subscriberCount!,
+          hiddenSubscriberCount: channel.statistics!.hiddenSubscriberCount!,
+          videoCount: channel.statistics!.videoCount!
+        }
+      };
+    } catch (error) {
+      this.handleApiError(error);
+      throw error;
+    }
+  }
+
+  async getPublicChannelVideos(channelId: string, maxResults: number = 25): Promise<SearchResult[]> {
+    try {
+      const response = await this.withRetry(async () => {
+        return await this.youtube.search.list({
+          part: ['snippet'],
+          channelId: channelId,
+          type: ['video'],
+          maxResults: Math.min(maxResults, 50),
+          order: 'date'
+        });
+      });
+
+      return response.data.items?.map(item => ({
+        kind: item.kind!,
+        etag: item.etag!,
+        id: {
+          kind: item.id!.kind!,
+          videoId: item.id!.videoId || undefined,
+          channelId: item.id!.channelId || undefined,
+          playlistId: item.id!.playlistId || undefined
+        },
+        snippet: {
+          publishedAt: item.snippet!.publishedAt!,
+          channelId: item.snippet!.channelId!,
+          title: item.snippet!.title!,
+          description: item.snippet!.description!,
+          thumbnails: transformSearchThumbnails(item.snippet!.thumbnails!),
+          channelTitle: item.snippet!.channelTitle!,
+          liveBroadcastContent: item.snippet!.liveBroadcastContent!,
+          publishTime: item.snippet!.publishedAt!
+        }
+      })) || [];
+    } catch (error) {
+      this.handleApiError(error);
+      throw error;
+    }
+  }
+
   // Content Performance Analytics methods
   async getAudienceRetention(params: RetentionParams): Promise<any> {
     return this.getVideoAnalytics(params.videoId, {
