@@ -2,7 +2,18 @@
 
 A Model Context Protocol (MCP) server for YouTube Analytics data access with demographics and discovery tools, built with a scalable config-driven architecture.
 
-## Architecture Overview
+## Core Features
+
+- **Channel Analytics**: Get comprehensive channel overview, growth patterns, and vital signs
+- **Video Performance**: Analyze individual video metrics, audience retention, and drop-off points
+- **Viewer Demographics**: Access age/gender breakdowns and geographic distribution data
+- **Discovery Insights**: Understand traffic sources and search terms driving views
+- **Engagement Metrics**: Track likes, comments, shares, and viewer interaction patterns
+- **Audience Retention**: Identify exact moments where viewers drop off for content optimization
+- **Performance Comparison**: Compare metrics between different time periods
+- **Public Channel Analysis**: Research competitor channels and trending content
+
+## Core Architecture Principles
 
 This MCP server follows a **config-driven architecture** that provides:
 
@@ -10,6 +21,39 @@ This MCP server follows a **config-driven architecture** that provides:
 - **Scalability**: Easy to add new tools without modifying core server logic
 - **Consistency**: Standardized error handling and response formatting
 - **Readability**: Clean, declarative configuration that serves as documentation
+
+## Setup
+
+### 1. Google API Credentials
+
+To use this YouTube Analytics MCP server, you need to set up Google API credentials:
+
+1. Go to the [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select an existing one
+3. Enable the YouTube Analytics API and YouTube Data API v3
+4. Go to "Credentials" and create a new OAuth 2.0 Client ID
+5. Download the credentials as JSON
+6. Save the file as `credentials.json` in the `src/auth/` directory
+
+**Privacy Note**: All data processing happens locally on your computer. Your credentials and analytics data never leave your machine - the server runs entirely locally and connects directly to Google's APIs from your system.
+
+### 2. Development
+
+```bash
+# Install dependencies
+npm install
+
+# Build the project
+npm run build
+
+# Run in development mode
+npm run dev
+
+# Inspect with MCP Inspector
+npm run inspect
+```
+
+## Architecture Overview
 
 ## Project Structure
 
@@ -134,37 +178,6 @@ export const allToolConfigs = [
 5. **Extensibility**: Simple to add new tool categories
 6. **Maintainability**: Consistent patterns across all tools
 7. **Scalability**: Easy to manage many tools without cluttering main file
-
-## Setup
-
-### 1. Google API Credentials
-
-To use this YouTube Analytics MCP server, you need to set up Google API credentials:
-
-1. Go to the [Google Cloud Console](https://console.cloud.google.com/)
-2. Create a new project or select an existing one
-3. Enable the YouTube Analytics API and YouTube Data API v3
-4. Go to "Credentials" and create a new OAuth 2.0 Client ID
-5. Download the credentials as JSON
-6. Save the file as `credentials.json` in the `src/auth/` directory
-
-**Privacy Note**: All data processing happens locally on your computer. Your credentials and analytics data never leave your machine - the server runs entirely locally and connects directly to Google's APIs from your system.
-
-### 2. Development
-
-```bash
-# Install dependencies
-npm install
-
-# Build the project
-npm run build
-
-# Run in development mode
-npm run dev
-
-# Inspect with MCP Inspector
-npm run inspect
-```
 
 ## Server Registration Pattern
 
